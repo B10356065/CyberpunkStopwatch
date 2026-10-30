@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         /* Custom Fonts */
@@ -162,11 +164,12 @@
         <!-- Top Header / Frame Accent -->
         <div class="w-full flex justify-between items-center pt-1 border-b border-cyan-500/20 pb-3">
             <div class="flex items-center space-x-2">
-                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                <i data-lucide="cpu" class="w-4 h-4 text-cyan-400 animate-pulse"></i>
                 <span class="text-xs tracking-widest text-cyan-400/80 font-mono">CHRONO_SYS</span>
             </div>
-            <div class="text-xs font-mono text-fuchsia-400/80 tracking-widest">
-                FPS: <span id="fpsCounter">60</span>
+            <div class="flex items-center space-x-1.5 text-xs font-mono text-fuchsia-400/80 tracking-widest">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-fuchsia-400"></i>
+                <span>FPS: <span id="fpsCounter">60</span></span>
             </div>
         </div>
 
@@ -184,18 +187,24 @@
             </svg>
 
             <!-- Inner Static Glow Circle -->
-            <div class="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-cyan-500/30 bg-black/50 backdrop-blur-sm shadow-[0_0_30px_rgba(0,240,255,0.15)] flex items-center justify-center"></div>
+            <div class="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-cyan-500/30 bg-black/50 backdrop-blur-sm shadow-[0_0_30px_rgba(0,240,255,0.15)] flex flex-col items-center justify-center"></div>
 
             <!-- Side HUD Arc Indicators -->
             <div class="absolute -left-3 top-1/2 -translate-y-1/2 h-16 w-1 border-l-2 border-cyan-400/70"></div>
             <div class="absolute -right-3 top-1/2 -translate-y-1/2 h-16 w-1 border-r-2 border-fuchsia-500/70"></div>
 
             <!-- Digital Time Display -->
-            <div class="relative z-10 text-center">
+            <div class="relative z-10 text-center flex flex-col items-center">
+                <!-- Mini Timer Icon Header -->
+                <div class="mb-1 text-cyan-400/70 flex items-center justify-center space-x-1">
+                    <i data-lucide="timer" class="w-4 h-4"></i>
+                    <span class="text-[10px] font-mono tracking-widest">STOPWATCH</span>
+                </div>
+
                 <div id="display" class="font-digital text-2xl sm:text-3xl font-bold tracking-wider text-cyan-300 glow-text">
                     00:00:00:00
                 </div>
-                <div class="text-[10px] tracking-[0.3em] font-mono text-cyan-400/60 mt-1">
+                <div class="text-[10px] tracking-[0.3em] font-mono text-cyan-400/60 mt-2">
                     HRS : MIN : SEC : MS
                 </div>
             </div>
@@ -204,123 +213,4 @@
         <!-- Control Buttons Section -->
         <div class="w-full space-y-4 pb-2">
             
-            <!-- Main Action Button (Start / Pause / Continue) -->
-            <button id="mainBtn" class="cyber-btn-main w-full py-3.5 sm:py-4 text-xl sm:text-2xl font-bold tracking-widest rounded-md focus:outline-none">
-                開始
-            </button>
-
-            <!-- Reset Button -->
-            <button id="resetBtn" class="cyber-btn-reset cyber-btn-disabled w-full py-3.5 sm:py-4 text-xl sm:text-2xl font-bold tracking-widest rounded-md focus:outline-none" disabled>
-                重置
-            </button>
-        </div>
-
-        <!-- Bottom Accent Footer -->
-        <div class="w-full flex justify-between items-center text-[10px] font-mono text-gray-500 border-t border-cyan-500/20 pt-2">
-            <span>STATUS: <span id="statusText" class="text-cyan-400">READY</span></span>
-            <span>CYBER_STOPWATCH_V2.0</span>
-        </div>
-    </div>
-
-    <!-- Logic JavaScript -->
-    <script>
-        // DOM Elements
-        const displayEl = document.getElementById('display');
-        const mainBtn = document.getElementById('mainBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const statusText = document.getElementById('statusText');
-
-        // State Machine Variables
-        // States: 'IDLE' (Index), 'RUNNING' (Start), 'PAUSED' (Pause)
-        let state = 'IDLE'; 
-        let startTime = 0;
-        let elapsedTime = 0;
-        let animationFrameId = null;
-
-        // Format milliseconds into HH:MM:SS:MS format
-        function formatTime(ms) {
-            const hours = Math.floor(ms / 3600000);
-            const minutes = Math.floor((ms % 3600000) / 60000);
-            const seconds = Math.floor((ms % 60000) / 1000);
-            const centiseconds = Math.floor((ms % 1000) / 10);
-
-            const pad = (num, size = 2) => String(num).padStart(size, '0');
-
-            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}:${pad(centiseconds)}`;
-        }
-
-        // Timer Update Loop using requestAnimationFrame for smooth high-precision timing
-        function updateTimer() {
-            const now = performance.now();
-            const currentElapsed = elapsedTime + (now - startTime);
-            displayEl.textContent = formatTime(currentElapsed);
-            animationFrameId = requestAnimationFrame(updateTimer);
-        }
-
-        // Enable / Disable Reset Button Helper
-        function setResetButtonState(enabled) {
-            if (enabled) {
-                resetBtn.disabled = false;
-                resetBtn.classList.remove('cyber-btn-disabled');
-            } else {
-                resetBtn.disabled = true;
-                resetBtn.classList.add('cyber-btn-disabled');
-            }
-        }
-
-        // Main Action Button Click Handler (Handles Start, Pause, Continue)
-        mainBtn.addEventListener('click', () => {
-            if (state === 'IDLE') {
-                // Index -> ClickStart -> Start
-                state = 'RUNNING';
-                startTime = performance.now();
-                animationFrameId = requestAnimationFrame(updateTimer);
-
-                mainBtn.textContent = '暫停';
-                setResetButtonState(true);
-                statusText.textContent = 'RUNNING';
-                statusText.className = 'text-green-400';
-
-            } else if (state === 'RUNNING') {
-                // Start -> ClickPause -> Pause
-                state = 'PAUSED';
-                cancelAnimationFrame(animationFrameId);
-                elapsedTime += performance.now() - startTime;
-
-                mainBtn.textContent = '繼續';
-                setResetButtonState(true);
-                statusText.textContent = 'PAUSED';
-                statusText.className = 'text-yellow-400';
-
-            } else if (state === 'PAUSED') {
-                // Pause -> ClickContinue -> Start
-                state = 'RUNNING';
-                startTime = performance.now();
-                animationFrameId = requestAnimationFrame(updateTimer);
-
-                mainBtn.textContent = '暫停';
-                setResetButtonState(true);
-                statusText.textContent = 'RUNNING';
-                statusText.className = 'text-green-400';
-            }
-        });
-
-        // Reset Button Click Handler
-        resetBtn.addEventListener('click', () => {
-            if (state === 'RUNNING' || state === 'PAUSED') {
-                // ClickReset -> Index
-                cancelAnimationFrame(animationFrameId);
-                state = 'IDLE';
-                elapsedTime = 0;
-                startTime = 0;
-
-                displayEl.textContent = '00:00:00:00';
-                mainBtn.textContent = '開始';
-                setResetButtonState(false);
-                statusText.textContent = 'READY';
-                statusText.className = 'text-cyan-400';
-            }
-        });
-    </script>
-</body>
-</html>
+            <!-- Main Action Button (Start

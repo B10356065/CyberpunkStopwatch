@@ -213,4 +213,146 @@
         <!-- Control Buttons Section -->
         <div class="w-full space-y-4 pb-2">
             
-            <!-- Main Action Button (Start
+            <!-- Main Action Button (Start / Pause / Continue) -->
+            <button id="mainBtn" class="cyber-btn-main w-full py-3.5 sm:py-4 text-xl sm:text-2xl font-bold tracking-widest rounded-md focus:outline-none flex items-center justify-center space-x-3">
+                <i id="mainIcon" data-lucide="play" class="w-6 h-6 fill-current"></i>
+                <span id="mainText">開始</span>
+            </button>
+
+            <!-- Reset Button -->
+            <button id="resetBtn" class="cyber-btn-reset cyber-btn-disabled w-full py-3.5 sm:py-4 text-xl sm:text-2xl font-bold tracking-widest rounded-md focus:outline-none flex items-center justify-center space-x-3" disabled>
+                <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
+                <span>重置</span>
+            </button>
+        </div>
+
+        <!-- Bottom Accent Footer -->
+        <div class="w-full flex justify-between items-center text-[10px] font-mono text-gray-500 border-t border-cyan-500/20 pt-2">
+            <div class="flex items-center space-x-1.5">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>STATUS: <span id="statusText" class="text-cyan-400">READY</span></span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <i data-lucide="terminal" class="w-3.5 h-3.5 text-gray-500"></i>
+                <span>CYBER_STOPWATCH_V2.0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic JavaScript -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const displayEl = document.getElementById('display');
+        const mainBtn = document.getElementById('mainBtn');
+        const mainText = document.getElementById('mainText');
+        const mainIcon = document.getElementById('mainIcon');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusText = document.getElementById('statusText');
+
+        // State Machine Variables
+        let state = 'IDLE'; 
+        let startTime = 0;
+        let elapsedTime = 0;
+        let animationFrameId = null;
+
+        // Helper function to update Lucide Icon inside mainBtn
+        function updateMainIcon(iconName, isFilled = false) {
+            mainIcon.setAttribute('data-lucide', iconName);
+            if (isFilled) {
+                mainIcon.classList.add('fill-current');
+            } else {
+                mainIcon.classList.remove('fill-current');
+            }
+            lucide.createIcons();
+        }
+
+        // Format milliseconds into HH:MM:SS:MS format
+        function formatTime(ms) {
+            const hours = Math.floor(ms / 3600000);
+            const minutes = Math.floor((ms % 3600000) / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            const centiseconds = Math.floor((ms % 1000) / 10);
+
+            const pad = (num, size = 2) => String(num).padStart(size, '0');
+
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}:${pad(centiseconds)}`;
+        }
+
+        // Timer Update Loop using requestAnimationFrame
+        function updateTimer() {
+            const now = performance.now();
+            const currentElapsed = elapsedTime + (now - startTime);
+            displayEl.textContent = formatTime(currentElapsed);
+            animationFrameId = requestAnimationFrame(updateTimer);
+        }
+
+        // Enable / Disable Reset Button Helper
+        function setResetButtonState(enabled) {
+            if (enabled) {
+                resetBtn.disabled = false;
+                resetBtn.classList.remove('cyber-btn-disabled');
+            } else {
+                resetBtn.disabled = true;
+                resetBtn.classList.add('cyber-btn-disabled');
+            }
+        }
+
+        // Main Action Button Click Handler (Handles Start, Pause, Continue)
+        mainBtn.addEventListener('click', () => {
+            if (state === 'IDLE') {
+                state = 'RUNNING';
+                startTime = performance.now();
+                animationFrameId = requestAnimationFrame(updateTimer);
+
+                mainText.textContent = '暫停';
+                updateMainIcon('pause', true);
+                setResetButtonState(true);
+                statusText.textContent = 'RUNNING';
+                statusText.className = 'text-green-400';
+
+            } else if (state === 'RUNNING') {
+                state = 'PAUSED';
+                cancelAnimationFrame(animationFrameId);
+                elapsedTime += performance.now() - startTime;
+
+                mainText.textContent = '繼續';
+                updateMainIcon('play', true);
+                setResetButtonState(true);
+                statusText.textContent = 'PAUSED';
+                statusText.className = 'text-yellow-400';
+
+            } else if (state === 'PAUSED') {
+                state = 'RUNNING';
+                startTime = performance.now();
+                animationFrameId = requestAnimationFrame(updateTimer);
+
+                mainText.textContent = '暫停';
+                updateMainIcon('pause', true);
+                setResetButtonState(true);
+                statusText.textContent = 'RUNNING';
+                statusText.className = 'text-green-400';
+            }
+        });
+
+        // Reset Button Click Handler
+        resetBtn.addEventListener('click', () => {
+            if (state === 'RUNNING' || state === 'PAUSED') {
+                cancelAnimationFrame(animationFrameId);
+                state = 'IDLE';
+                elapsedTime = 0;
+                startTime = 0;
+
+                displayEl.textContent = '00:00:00:00';
+                mainText.textContent = '開始';
+                updateMainIcon('play', true);
+                setResetButtonState(false);
+                statusText.textContent = 'READY';
+                statusText.className = 'text-cyan-400';
+            }
+        });
+    </script>
+</body>
+</html>
